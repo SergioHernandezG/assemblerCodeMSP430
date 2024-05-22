@@ -1,0 +1,55 @@
+;-------------------------------------------------------------------------------
+; MSP430 Assembler Code Template for use with TI Code Composer Studio
+;
+;
+;-------------------------------------------------------------------------------
+            .cdecls C,LIST,"msp430.h"       ; Include device header file
+            
+;-------------------------------------------------------------------------------
+            .def    RESET                   ; Export program entry-point to
+                                            ; make it known to linker.
+;-------------------------------------------------------------------------------
+            .text                           ; Assemble into program memory.
+            .retain                         ; Override ELF conditional linking
+                                            ; and retain current section.
+            .retainrefs                     ; And retain any sections that have
+                                            ; references to current section.
+
+;-------------------------------------------------------------------------------
+RESET       mov.w   #0280h,SP         ; Initialize stackpointer
+StopWDT     mov.w   #WDTPW|WDTHOLD,&WDTCTL  ; Stop watchdog timer
+
+Inicializaciones:
+                 mov.b #BIT4, &P1DIR
+                 bic.b #BIT4, P1OUT
+
+Input:
+       mov.b    #BIT7, &P1OUT
+       bis.b    #BIT7, &P1REN            ; Resistenacia
+       bis.b    #BIT7, &P1IE             ; Resistencia de pull up
+       bis.b    #BIT7, &P1IES
+       bic.b    #BIT7, &P1IFG            ;operacion logica
+
+
+
+;-------------------------------------------------------------------------------
+; Main loop here
+;-------------------------------------------------------------------------------
+Mainloop:
+          bis.w #LPM4+GIE,SR
+          nop
+
+Push_Button:
+
+            xor.b #BIT4, &P1OUT
+            bic.b #BIT7, &P1IFG
+            reti
+
+                                            
+;-------------------------------------------------------------------------------
+; Interrupt Vectors
+                    .sect ".reset"
+                    .short RESET
+                    .sect ".int02"
+                    .short Push_Button
+                    .end
